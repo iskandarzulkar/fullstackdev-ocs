@@ -1,0 +1,511 @@
+{
+  "info": {
+    "_postman_id": "14bc72a2-109a-4fdb-8f8f-f4f38f7d7dd7",
+    "name": "OCS Service - Dynamic Workflow Approval",
+    "description": "Collection untuk test CRUD Employee, Transactions, WorkflowApproval, NeedApproval, dan proses submit approval dinamis. Gunakan environment `OCS Service - Local` sebelum menjalankan request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Module",
+      "description": "Endpoint master modul. Tabel ini menjadi sumber resmi `Modul_id` dan `Nama Modul`, sehingga relasi Transaction, WorkflowApproval, dan NeedApproval tidak ambigu.",
+      "item": [
+        {
+          "name": "List Module",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/module",
+            "description": "Mengambil semua master modul yang tersedia. Gunakan endpoint ini untuk mengetahui pasangan Modul_id dan nama modul."
+          }
+        },
+        {
+          "name": "Detail Module by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/module/{{module_id}}",
+            "description": "Mengambil detail satu modul berdasarkan Modul_id."
+          }
+        },
+        {
+          "name": "Create Module",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.id) {",
+                  "  pm.environment.set('module_id', json.data.id);",
+                  "  pm.environment.set('module_name', json.data.Name);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 6,\n  \"Name\": \"Budget Request\"\n}"
+            },
+            "url": "{{base_url}}/module",
+            "description": "Membuat master modul baru. Nama modul dibuat unik agar satu nama tidak bisa dipakai oleh beberapa Modul_id."
+          }
+        },
+        {
+          "name": "Update Module",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Name\": \"Purchase Request Updated\"\n}"
+            },
+            "url": "{{base_url}}/module/{{module_id}}",
+            "description": "Memperbarui nama modul berdasarkan Modul_id. WorkflowApproval dengan Modul_id yang sama ikut disinkronkan namanya."
+          }
+        },
+        {
+          "name": "Delete Module",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/module/{{module_id}}",
+            "description": "Menghapus modul berdasarkan ID. Database akan menolak jika modul masih dipakai oleh transaksi, workflow, atau need approval."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employee",
+      "description": "Endpoint data pegawai. Data approver 1 dan approver 2 dipakai oleh rule HRIS saat transaksi diajukan.",
+      "item": [
+        {
+          "name": "List Employee",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/employee",
+            "description": "Mengambil semua data pegawai, diurutkan berdasarkan nama."
+          }
+        },
+        {
+          "name": "Detail Employee by NIK",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/employee/{{employee_nik_existing}}",
+            "description": "Mengambil detail satu pegawai berdasarkan NIK. Dipakai juga untuk validasi approver dan pembuat transaksi."
+          }
+        },
+        {
+          "name": "Create Employee",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.Nik) {",
+                  "  pm.environment.set('employee_nik', json.data.Nik);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Nik\": \"{{employee_nik}}\",\n  \"Name\": \"Tester Approval\",\n  \"Email\": \"tester.approval@xyz.co.id\",\n  \"Position\": \"Staff Finance\",\n  \"Approver1_name\": \"Siti Aminah\",\n  \"Approver1_email\": \"siti.aminah@xyz.co.id\",\n  \"Approver1_position\": \"Supervisor Finance\",\n  \"Approver2_name\": \"Andi Wijaya\",\n  \"Approver2_email\": \"andi.wijaya@xyz.co.id\",\n  \"Approver2_position\": \"Manager Finance\"\n}"
+            },
+            "url": "{{base_url}}/employee",
+            "description": "Membuat pegawai baru. NIK wajib 14 digit angka. Data approver di body akan dipakai saat WorkflowApproval bertipe HRIS."
+          }
+        },
+        {
+          "name": "Update Employee",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Name\": \"Tester Approval Updated\",\n  \"Email\": \"tester.approval.updated@xyz.co.id\",\n  \"Position\": \"Senior Staff Finance\",\n  \"Approver1_name\": \"Siti Aminah\",\n  \"Approver1_email\": \"siti.aminah@xyz.co.id\",\n  \"Approver1_position\": \"Supervisor Finance\",\n  \"Approver2_name\": \"Andi Wijaya\",\n  \"Approver2_email\": \"andi.wijaya@xyz.co.id\",\n  \"Approver2_position\": \"Manager Finance\"\n}"
+            },
+            "url": "{{base_url}}/employee/{{employee_nik}}",
+            "description": "Memperbarui data pegawai berdasarkan NIK di URL. NIK tidak diubah dari body."
+          }
+        },
+        {
+          "name": "Delete Employee",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/employee/{{employee_nik}}",
+            "description": "Menghapus pegawai berdasarkan NIK. Hindari menghapus pegawai yang masih direferensikan transaksi atau approval."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Endpoint transaksi. Setelah transaksi dibuat, panggil submit approval agar stored procedure mengisi NeedApproval berdasarkan WorkflowApproval.",
+      "item": [
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/transaction",
+            "description": "Mengambil semua transaksi, termasuk nama pembuat transaksi jika data pegawai tersedia."
+          }
+        },
+        {
+          "name": "Detail Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/transaction/{{transaction_id}}",
+            "description": "Mengambil detail transaksi berdasarkan ID."
+          }
+        },
+        {
+          "name": "Create Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data) {",
+                  "  const id = json.data.id || json.data.Id;",
+                  "  if (id) pm.environment.set('transaction_id', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Amount\": 7500000,\n  \"createdBy\": \"{{employee_nik_existing}}\"\n}"
+            },
+            "url": "{{base_url}}/transaction",
+            "description": "Membuat transaksi baru. `createdBy` harus NIK pegawai yang ada. Request ini belum membuat NeedApproval; jalankan endpoint Submit Approval setelah transaksi dibuat."
+          }
+        },
+        {
+          "name": "Submit Approval Transaction",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json.data) && json.data.length > 0) {",
+                  "  const id = json.data[0].id || json.data[0].Id;",
+                  "  if (id) pm.environment.set('need_approval_id', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{base_url}}/transaction/{{transaction_id}}/submit",
+            "description": "Mengajukan approval transaksi. Endpoint ini menjalankan stored procedure `dbo.SubmitNeedApproval`, menghapus NeedApproval lama untuk transaksi tersebut, lalu membuat ulang berdasarkan rule `Custom`, `HRIS`, `Total Amount >=`, `Total Amount >`, `Total Amount <=`, dan `Total Amount <`."
+          }
+        },
+        {
+          "name": "Update Transaction",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Amount\": 9000000,\n  \"createdBy\": \"{{employee_nik_existing}}\"\n}"
+            },
+            "url": "{{base_url}}/transaction/{{transaction_id}}",
+            "description": "Memperbarui transaksi berdasarkan ID. Setelah amount berubah, jalankan lagi Submit Approval agar NeedApproval dihitung ulang."
+          }
+        },
+        {
+          "name": "Delete Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/transaction/{{transaction_id}}",
+            "description": "Menghapus transaksi berdasarkan ID. Jika transaksi sudah punya NeedApproval, hapus NeedApproval terkait lebih dulu bila database menolak karena foreign key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "WorkflowApproval",
+      "description": "Endpoint konfigurasi approver dinamis. Admin mengatur siapa saja approver per modul dan rule tanpa mengubah kode.",
+      "item": [
+        {
+          "name": "List WorkflowApproval",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/workflow",
+            "description": "Mengambil semua konfigurasi workflow approval, diurutkan berdasarkan modul dan level."
+          }
+        },
+        {
+          "name": "Detail WorkflowApproval by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/workflow/{{workflow_id}}",
+            "description": "Mengambil detail satu konfigurasi workflow approval berdasarkan ID."
+          }
+        },
+        {
+          "name": "Create WorkflowApproval - Custom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data) {",
+                  "  const id = json.data.id || json.data.Id;",
+                  "  if (id) pm.environment.set('workflow_id', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Modul\": \"Transaction\",\n  \"Type\": \"Custom\",\n  \"Value\": 0,\n  \"Level\": 1,\n  \"Nik\": \"{{approver_nik}}\"\n}"
+            },
+            "url": "{{base_url}}/workflow",
+            "description": "Membuat rule approval Custom. NIK wajib diisi, lalu Name, Email, dan Position otomatis diambil dari tabel Employee."
+          }
+        },
+        {
+          "name": "Create WorkflowApproval - HRIS",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Modul\": \"Transaction\",\n  \"Type\": \"HRIS\",\n  \"Value\": 0,\n  \"Level\": 1\n}"
+            },
+            "url": "{{base_url}}/workflow",
+            "description": "Membuat rule approval HRIS. NIK tidak perlu diisi karena approver akan diambil dari Approver1 dan Approver2 milik pegawai pembuat transaksi."
+          }
+        },
+        {
+          "name": "Create WorkflowApproval - Total Amount >=",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Modul\": \"Transaction\",\n  \"Type\": \"Total Amount >=\",\n  \"Value\": 5000000,\n  \"Level\": 2,\n  \"Nik\": \"74011306950003\"\n}"
+            },
+            "url": "{{base_url}}/workflow",
+            "description": "Membuat rule approval berbasis nominal. Approver masuk ke NeedApproval hanya jika Amount transaksi lebih besar atau sama dengan Value."
+          }
+        },
+        {
+          "name": "Update WorkflowApproval",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Modul\": \"Transaction\",\n  \"Type\": \"Total Amount >\",\n  \"Value\": 7000000,\n  \"Level\": 3,\n  \"Nik\": \"74011306950004\"\n}"
+            },
+            "url": "{{base_url}}/workflow/{{workflow_id}}",
+            "description": "Memperbarui konfigurasi workflow approval. Setelah rule diubah, jalankan Submit Approval pada transaksi terkait agar NeedApproval dihitung ulang."
+          }
+        },
+        {
+          "name": "Delete WorkflowApproval",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/workflow/{{workflow_id}}",
+            "description": "Menghapus konfigurasi workflow approval berdasarkan ID. Penghapusan ini tidak otomatis menghapus NeedApproval lama yang sudah terbentuk."
+          }
+        }
+      ]
+    },
+    {
+      "name": "NeedApproval",
+      "description": "Endpoint hasil approval yang dibutuhkan per transaksi. Normalnya data dibuat otomatis lewat Submit Approval Transaction; endpoint CRUD manual tetap tersedia untuk administrasi atau koreksi.",
+      "item": [
+        {
+          "name": "List NeedApproval",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/approval",
+            "description": "Mengambil semua data NeedApproval, diurutkan berdasarkan transaksi dan level approval."
+          }
+        },
+        {
+          "name": "List NeedApproval by Transaction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/approval/transaction/{{transaction_id}}",
+            "description": "Mengambil daftar approver yang dibutuhkan untuk satu transaksi tertentu. Gunakan setelah Submit Approval Transaction untuk melihat hasil stored procedure."
+          }
+        },
+        {
+          "name": "Detail NeedApproval by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/approval/{{need_approval_id}}",
+            "description": "Mengambil detail satu data NeedApproval berdasarkan ID."
+          }
+        },
+        {
+          "name": "Create NeedApproval Manual",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data) {",
+                  "  const id = json.data.id || json.data.Id;",
+                  "  if (id) pm.environment.set('need_approval_id', id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Transaction_Id\": {{transaction_id}},\n  \"Nik\": \"{{approver_nik}}\",\n  \"Level\": 1,\n  \"SourceType\": \"Manual\"\n}"
+            },
+            "url": "{{base_url}}/approval",
+            "description": "Membuat NeedApproval secara manual. NIK wajib pegawai yang ada; Name, Email, dan Position otomatis diambil dari Employee."
+          }
+        },
+        {
+          "name": "Update NeedApproval Manual",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Modul_id\": 1,\n  \"Transaction_Id\": {{transaction_id}},\n  \"Nik\": \"74011306950003\",\n  \"Level\": 2,\n  \"SourceType\": \"Manual\"\n}"
+            },
+            "url": "{{base_url}}/approval/{{need_approval_id}}",
+            "description": "Memperbarui NeedApproval manual berdasarkan ID. Data approver kembali diambil dari Employee berdasarkan NIK."
+          }
+        },
+        {
+          "name": "Delete NeedApproval",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{base_url}}/approval/{{need_approval_id}}",
+            "description": "Menghapus satu data NeedApproval berdasarkan ID."
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response format JSON', function () {",
+          "  pm.response.to.have.header('Content-Type');",
+          "});"
+        ]
+      }
+    }
+  ]
+}
