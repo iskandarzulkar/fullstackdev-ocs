@@ -5,6 +5,7 @@ const moduleService = require("../modules");
 const validateTransaction = async (data) => {
     if (!data.Modul_id) throw { statusCode: 400, message: "Modul_id wajib diisi" };
     if (data.Amount === undefined || data.Amount === null) throw { statusCode: 400, message: "Amount wajib diisi" };
+    if (Number.isNaN(Number(data.Amount))) throw { statusCode: 400, message: "Amount harus berupa angka" };
     if (Number(data.Amount) < 0) throw { statusCode: 400, message: "Amount tidak boleh minus" };
     if (!data.createdBy) throw { statusCode: 400, message: "createdBy wajib diisi" };
 

@@ -16,7 +16,7 @@ module.exports = {
                 Position NVARCHAR(100) NULL,
 
                 [Level] INT NOT NULL,
-                SourceType NVARCHAR(50) NULL,
+                SourceType NVARCHAR(200) NULL,
 
                 created_at DATETIME2 NOT NULL DEFAULT SYSDATETIME(),
                 updated_at DATETIME2 NULL,

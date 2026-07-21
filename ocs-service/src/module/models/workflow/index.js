@@ -3,7 +3,9 @@ const { sql, poolPromise } = require("../../../config/database");
 const getAllWorkflowApprovals = async () => {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-        SELECT * FROM WorkflowApproval ORDER BY Modul_id ASC, [Level] ASC, id DESC
+        SELECT *
+        FROM WorkflowApproval
+        ORDER BY Modul_id ASC, [Level] ASC, Name ASC, id ASC
     `);
     return result.recordset;
 };

@@ -18,6 +18,18 @@ module.exports = {
 
   down: async (request) => {
     await request.query(`
+      DELETE FROM NeedApproval
+      WHERE Modul_id IN (1, 2, 3, 4, 5)
+      OR Transaction_Id IN (
+        SELECT id FROM Transactions WHERE Modul_id IN (1, 2, 3, 4, 5)
+      );
+
+      DELETE FROM WorkflowApproval
+      WHERE Modul_id IN (1, 2, 3, 4, 5);
+
+      DELETE FROM Transactions
+      WHERE Modul_id IN (1, 2, 3, 4, 5);
+
       DELETE FROM Modules
       WHERE id IN (1, 2, 3, 4, 5);
     `);

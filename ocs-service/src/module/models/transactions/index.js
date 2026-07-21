@@ -79,7 +79,7 @@ const submitApproval = async (id) => {
         SELECT *
         FROM NeedApproval
         WHERE Transaction_Id = @Transaction_Id
-        ORDER BY [Level] ASC, id ASC
+        ORDER BY [Level] ASC, Name ASC, id ASC
         `);
 
     return result.recordset;

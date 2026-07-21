@@ -3,7 +3,7 @@ const { sql, poolPromise } = require("../../../config/database");
 const getAllNeedApprovals = async () => {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-        SELECT * FROM NeedApproval ORDER BY Transaction_Id ASC, [Level] ASC
+        SELECT * FROM NeedApproval ORDER BY Transaction_Id ASC, [Level] ASC, Name ASC, id ASC
     `);
     return result.recordset;
 };
@@ -24,7 +24,7 @@ const getNeedApprovalsByTransactionId = async (transactionId) => {
         .query(`
         SELECT * FROM NeedApproval
         WHERE Transaction_Id = @Transaction_Id
-        ORDER BY [Level] ASC
+        ORDER BY [Level] ASC, Name ASC, id ASC
         `);
 
     return result.recordset;
@@ -40,7 +40,7 @@ const createNeedApproval = async (data) => {
         .input("Email", sql.NVarChar(150), data.Email)
         .input("Position", sql.NVarChar(100), data.Position)
         .input("Level", sql.Int, data.Level)
-        .input("SourceType", sql.NVarChar(50), data.SourceType || "Manual")
+        .input("SourceType", sql.NVarChar(200), data.SourceType || "Manual")
         .query(`
         INSERT INTO NeedApproval (
             Modul_id, Transaction_Id, Nik, Name, Email, Position, [Level], SourceType
@@ -65,7 +65,7 @@ const updateNeedApproval = async (id, data) => {
         .input("Email", sql.NVarChar(150), data.Email)
         .input("Position", sql.NVarChar(100), data.Position)
         .input("Level", sql.Int, data.Level)
-        .input("SourceType", sql.NVarChar(50), data.SourceType || "Manual")
+        .input("SourceType", sql.NVarChar(200), data.SourceType || "Manual")
         .query(`
         UPDATE NeedApproval SET
             Modul_id = @Modul_id,

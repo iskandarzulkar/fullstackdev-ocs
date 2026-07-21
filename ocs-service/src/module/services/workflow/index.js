@@ -12,9 +12,11 @@ const allowedTypes = [
 ];
 
 const resolveLevel = (payload) => {
-    const level = payload.Level === undefined || payload.Level === null || payload.Level === ""
-        ? 1
-        : Number(payload.Level);
+    if (payload.Level === undefined || payload.Level === null || payload.Level === "") {
+        throw { statusCode: 400, message: "Level wajib diisi" };
+    }
+
+    const level = Number(payload.Level);
 
     if (!Number.isInteger(level) || level < 1) {
         throw { statusCode: 400, message: "Level harus angka lebih dari 0" };
@@ -35,8 +37,16 @@ const validateWorkflowApproval = async (payload) => {
     const Modul = moduleData.Name;
     const Level = resolveLevel(payload);
 
-    if (payload.Type.startsWith("Total Amount") && (payload.Value === undefined || payload.Value === null || payload.Value === "")) {
-        throw { statusCode: 400, message: "Value wajib diisi untuk aturan Total Amount" };
+    if (payload.Type !== "Custom" && (payload.Value === undefined || payload.Value === null || payload.Value === "")) {
+        throw { statusCode: 400, message: "Value wajib diisi jika Type bukan Custom" };
+    }
+
+    if (payload.Type !== "Custom" && Number.isNaN(Number(payload.Value))) {
+        throw { statusCode: 400, message: "Value harus berupa angka" };
+    }
+
+    if (payload.Type !== "Custom" && Number(payload.Value) < 0) {
+        throw { statusCode: 400, message: "Value tidak boleh minus" };
     }
 
     if (payload.Type === "HRIS") {
@@ -44,7 +54,7 @@ const validateWorkflowApproval = async (payload) => {
             Modul_id,
             Modul,
             Type: payload.Type,
-            Value: Number(payload.Value || 0),
+            Value: Number(payload.Value),
             Level,
             Nik: null,
             Name: null,

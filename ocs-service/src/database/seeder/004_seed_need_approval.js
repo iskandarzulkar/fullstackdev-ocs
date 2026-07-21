@@ -3,22 +3,42 @@ module.exports = {
     await request.query(`
       DECLARE @TransactionId INT;
 
-      SELECT TOP 1 @TransactionId = id
-      FROM Transactions
-      WHERE Modul_id = 1 AND Amount = 7500000 AND createdBy = '74011306950001'
-      ORDER BY id DESC;
+      DECLARE transaction_cursor CURSOR LOCAL FAST_FORWARD FOR
+        SELECT id
+        FROM Transactions
+        WHERE Modul_id = 1
+          AND (
+            (Amount = 7500000 AND createdBy = '74011306950001')
+            OR (Amount = 12000000 AND createdBy = '74011306950008')
+          )
+        ORDER BY id ASC;
 
-      IF @TransactionId IS NOT NULL
+      OPEN transaction_cursor;
+      FETCH NEXT FROM transaction_cursor INTO @TransactionId;
+
+      WHILE @@FETCH_STATUS = 0
       BEGIN
         EXEC dbo.SubmitNeedApproval @Transaction_Id = @TransactionId;
+        FETCH NEXT FROM transaction_cursor INTO @TransactionId;
       END
+
+      CLOSE transaction_cursor;
+      DEALLOCATE transaction_cursor;
     `);
   },
 
   down: async (request) => {
     await request.query(`
       DELETE FROM NeedApproval
-      WHERE Nik IN ('74011306950002', '74011306950003', '74011306950004');
+      WHERE Transaction_Id IN (
+        SELECT id
+        FROM Transactions
+        WHERE Modul_id = 1
+          AND (
+            (Amount = 7500000 AND createdBy = '74011306950001')
+            OR (Amount = 12000000 AND createdBy = '74011306950008')
+          )
+      );
     `);
   },
 };
