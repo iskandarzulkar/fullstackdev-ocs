@@ -1,0 +1,22 @@
+name: ocs-appbuilder
+
+services:
+  ocs-service:
+    image: ${OCS_SERVICE_IMAGE:-ocs-service:dev-latest}
+    build:
+      context: ..
+      dockerfile: appbuilder/ocs-service/dockerfile
+
+  ocs-client:
+    image: ${OCS_CLIENT_IMAGE:-ocs-client:dev-latest}
+    build:
+      context: ..
+      dockerfile: appbuilder/ocs-client/dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+
+  ocs-nginx-reverse-proxy-manager:
+    image: ${OCS_NGINX_REVERSE_PROXY_IMAGE:-ocs-nginx-reverse-proxy-manager:dev-latest}
+    build:
+      context: ..
+      dockerfile: appbuilder/nginx-reverse-proxy/dockerfile

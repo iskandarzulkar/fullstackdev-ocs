@@ -1,0 +1,44 @@
+name: ${COMPOSE_PROJECT_NAME:-ocs-dev}
+
+services:
+  ocs-service:
+    image: ${OCS_SERVICE_IMAGE:-ocs-service:dev-latest}
+    container_name: ${OCS_SERVICE_CONTAINER:-ocs-service-dev}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_PORT: ${APP_PORT:-3131}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_SERVER: ${DB_SERVER}
+      DB_NAME: ${DB_NAME}
+      DB_ENCRYPT: ${DB_ENCRYPT:-false}
+      DB_TRUST_SERVER_CERTIFICATE: ${DB_TRUST_SERVER_CERTIFICATE:-true}
+      DB_INSTANCE: ${DB_INSTANCE:-}
+    networks:
+      - ocs-network
+
+  ocs-client:
+    image: ${OCS_CLIENT_IMAGE:-ocs-client:dev-latest}
+    container_name: ${OCS_CLIENT_CONTAINER:-ocs-client-dev}
+    restart: unless-stopped
+    depends_on:
+      - ocs-service
+    networks:
+      - ocs-network
+
+  ocs-nginx-reverse-proxy-manager:
+    image: ${OCS_NGINX_REVERSE_PROXY_IMAGE:-ocs-nginx-reverse-proxy-manager:dev-latest}
+    container_name: ${OCS_NGINX_CONTAINER:-ocs-nginx-reverse-proxy-manager-dev}
+    restart: unless-stopped
+    depends_on:
+      - ocs-client
+      - ocs-service
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    networks:
+      - ocs-network
+
+networks:
+  ocs-network:
+    name: ${OCS_NETWORK:-ocs-dev-network}
